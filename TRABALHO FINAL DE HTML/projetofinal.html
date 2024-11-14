@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lista de Cachorros e Donos</title>
+  <style>
+    /* Estilo para o fundo */
+    body {
+      background-image: linear-gradient(to right, #83d49d, #b6fbff);
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    /* Estilo para o cabeçalho */
+    h1 {
+      text-align: center;
+      background-color: rgba(0, 116, 25, 0.85);
+      padding: 15px;
+      color: #ffffff;
+      border-radius: 8px;
+      font-size: 28px;
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Estilo do botão principal */
+    button {
+      padding: 10px 15px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 8px;
+      background-color: #015e2a;
+      color: #fff;
+      cursor: pointer;
+      font-size: 16px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    button:hover {
+      background-color: #3eea69;
+    }
+
+    /* Estilo para o formulário */
+    form {
+      background-color: rgba(255, 255, 255, 0.9);
+      border: 2px solid #02f663;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 300px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+    form label {
+      font-weight: bold;
+      color: #333;
+    }
+    form input {
+      margin: 5px 0 15px;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    form button[type="submit"] {
+      background-color: #28a745;
+    }
+    form button[type="submit"]:hover {
+      background-color: #218838;
+    }
+
+    /* Estilo para a tabela */
+    table {
+      width: 100%;
+      max-width: 800px;
+      border-collapse: collapse;
+      background-color: rgba(255, 255, 255, 0.95);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      margin-top: 20px;
+    }
+
+    /* Cabeçalho da tabela */
+    thead th {
+      background-color: #02b71a;
+      color: #ffffff;
+      padding: 12px;
+      font-size: 18px;
+      text-align: center;
+    }
+
+    /* Linhas da tabela */
+    tbody tr {
+      transition: background-color 0.3s;
+    }
+    tbody tr:hover {
+      background-color: #f1f1f1;
+    }
+    tbody tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    /* Células da tabela */
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+    td img {
+      border-radius: 50%;
+    }
+
+    /* Botões de ação */
+    .edit-btn, .delete-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #fff;
+    }
+    .edit-btn {
+      background-color: #ffc107;
+    }
+    .edit-btn:hover {
+      background-color: #e0a800;
+    }
+    .delete-btn {
+      background-color: #dc3545;
+    }
+    .delete-btn:hover {
+      background-color: #c82333;
+    }
+  </style>
+</head>
+<body>
+  <h1>Lista de Cachorros e Donos</h1>
+  <button onclick="exibirFormulario()">Adicionar um cachorro</button>
+
+  <form id="formulario" onsubmit="salvarCachorro(event)" style="display: none;">
+    <label>Cachorro</label>
+    <input id="dogName" name="cachorro" type="text" required />
+    <br />
+    <br>
+    <label>Dono</label>
+    <input id="ownerName" name="dono" type="text" required />
+    <br />
+    <br>
+    <label>Telefone</label>
+    <input id="phone" name="telefone" type="tel" required />
+    <br />
+    <br>
+    <label>Email</label>
+    <input id="email" name="email" type="email" required />
+    <br />
+    <br>
+    <label>Imagem(Adicione um número)</label>
+    <input id="photo" name="imagem" type="text" required />
+    <br />
+    <br>
+    <button type="submit">Salvar</button>
+  </form>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Imagem</th>
+        <th>Cachorro</th>
+        <th>Dono</th>
+        <th>Telefone</th>
+        <th>Email</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="dogsTableBody"></tbody>
+  </table>
+
+  <script>
+    let dogs = JSON.parse(localStorage.getItem("dogs")) || [];
+    let editingDogId = null;
+
+    function exibirFormulario() {
+      document.getElementById("formulario").style.display = "block";
+    }
+
+    function ocultarFormulario() {
+      document.getElementById("formulario").style.display = "none";
+      document.getElementById("formulario").reset();
+      editingDogId = null;
+    }
+
+    function renderDogs() {
+      const tableBody = document.getElementById("dogsTableBody");
+      tableBody.innerHTML = "";
+
+      dogs.forEach((dog) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td><img src="https://placedog.net/100/100?random=${dog.photo}" alt="Dog Photo" width="50"></td>
+          <td>${dog.name}</td>
+          <td>${dog.owner}</td>
+          <td>${dog.phone}</td>
+          <td>${dog.email}</td>
+          <td>
+            <button class="edit-btn" onclick="editDog(${dog.id})">Editar</button>
+            <button class="delete-btn" onclick="deleteDog(${dog.id})">Excluir</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    function salvarCachorro(event) {
+      event.preventDefault();
+      const name = document.getElementById("dogName").value;
+      const owner = document.getElementById("ownerName").value;
+      const phone = document.getElementById("phone").value;
+      const email = document.getElementById("email").value;
+      const photo = document.getElementById("photo").value;
+
+      if (editingDogId) {
+        const dog = dogs.find(d => d.id === editingDogId);
+        dog.name = name;
+        dog.owner = owner;
+        dog.phone = phone;
+        dog.email = email;
+        dog.photo = photo;
+      } else {
+        const newDog = { id: Date.now(), name, owner, phone, email, photo };
+        dogs.push(newDog);
+      }
+
+      localStorage.setItem("dogs", JSON.stringify(dogs));
+      renderDogs();
+      ocultarFormulario();
+    }
+
+    function editDog(id) {
+      const dog = dogs.find(d => d.id === id);
+      document.getElementById("dogName").value = dog.name;
+      document.getElementById("ownerName").value = dog.owner;
+      document.getElementById("phone").value = dog.phone;
+      document.getElementById("email").value = dog.email;
+      document.getElementById("photo").value = dog.photo;
+      editingDogId = id;
+      exibirFormulario();
+    }
+
+    function deleteDog(id) {
+      dogs = dogs.filter(dog => dog.id !== id);
+      localStorage.setItem("dogs", JSON.stringify(dogs));
+      renderDogs();
+    }
+
+    renderDogs();
+  </script>
+</body>
+</html>
